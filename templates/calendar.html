@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calendar - Habit Tracker</title>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+<style>
+body {
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    min-height: 100vh;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+.navbar {
+    background: white;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    padding: 15px 0;
+}
+.navbar-brand {
+    font-weight: 700;
+    color: #667eea !important;
+    font-size: 24px;
+}
+.container-main {
+    margin: 30px auto;
+}
+.header-card {
+    background: white;
+    border-radius: 15px;
+    padding: 30px;
+    margin-bottom: 30px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+}
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 15px;
+    margin-bottom: 30px;
+}
+.calendar-day {
+    background: white;
+    border-radius: 12px;
+    padding: 15px;
+    text-align: center;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+    transition: transform 0.3s, box-shadow 0.3s;
+    min-height: 100px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    cursor: pointer;
+}
+.calendar-day:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+}
+.day-number {
+    font-size: 24px;
+    font-weight: 700;
+}
+.day-progress {
+    font-size: 14px;
+    color: #666;
+}
+.progress-bar-container {
+    background: #e0e0e0;
+    height: 6px;
+    border-radius: 3px;
+    overflow: hidden;
+}
+ .progress-bar-fill {
+     height: 100%;
+     border-radius: 3px;
+     transition: width 0.3s;
+ }
+
+/* Status colors */
+.calendar-day.excellent { border-left: 4px solid #4CAF50; }
+.calendar-day.excellent .progress-bar-fill { background: #4CAF50; }
+
+.calendar-day.good { border-left: 4px solid #8BC34A; }
+.calendar-day.good .progress-bar-fill { background: #8BC34A; }
+
+.calendar-day.average { border-left: 4px solid #FFC107; }
+.calendar-day.average .progress-bar-fill { background: #FFC107; }
+
+.calendar-day.poor { border-left: 4px solid #FF9800; }
+.calendar-day.poor .progress-bar-fill { background: #FF9800; }
+
+.calendar-day.none { border-left: 4px solid #f44336; }
+.calendar-day.none .progress-bar-fill { background: #f44336; }
+
+.calendar-day.missed { 
+    border-left: 4px solid #d32f2f; 
+    border-right: 4px solid #d32f2f;
+    border-top: 2px solid #d32f2f;
+    border-bottom: 2px solid #d32f2f;
+    background: #ffebee;
+}
+.calendar-day.missed .progress-bar-fill { background: #d32f2f; }
+.calendar-day.missed .day-number { color: #d32f2f; font-weight: 900; }
+
+.legend {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.legend-color {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+}
+.month-badge {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 8px 20px;
+    border-radius: 20px;
+    font-weight: 600;
+}
+
+@media (max-width: 768px) {
+    .calendar-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+</style>
+</head>
+
+<body>
+
+<nav class="navbar">
+<div class="container">
+    <a class="navbar-brand" href="/dashboard">
+        <i class="fas fa-calendar-check me-2"></i>Habit Tracker
+    </a>
+    <a href="/dashboard" class="btn btn-outline-primary">
+        <i class="fas fa-home me-2"></i>Dashboard
+    </a>
+</div>
+</nav>
+
+<div class="container container-main">
+
+<div class="header-card">
+    <h2><i class="fas fa-calendar-alt me-2"></i>Monthly Calendar</h2>
+    <p class="mb-0">Visual overview for <span class="month-badge">{{ month_name }}</span></p>
+</div>
+
+<div class="calendar-grid">
+{% for day in calendar_data %}
+{% set raw = day.percentage if day.percentage else 0 %}
+{% set percent = 0 if raw < 0 else 100 if raw > 100 else raw %}
+
+<div
+    class="calendar-day
+    {% if day.is_missed %}missed
+    {% elif percent >= 80 %}excellent
+    {% elif percent >= 60 %}good
+    {% elif percent >= 40 %}average
+    {% elif percent > 0 %}poor
+    {% else %}none{% endif %}"
+    data-date="{{ day.date }}"
+    data-completed="{{ day.completed }}"
+    data-total="{{ day.total }}"
+>
+
+    <div class="day-number">{{ day.day }}</div>
+
+    <div class="day-progress">
+        {% if day.total > 0 %}
+            {{ day.completed }}/{{ day.total }}
+        {% else %}
+            No habits
+        {% endif %}
+    </div>
+
+    {% set width_value = percent|round|int %}
+    <div class="progress-bar-container" aria-label="Progress {{ width_value }}%">
+        <div class="progress-bar-fill" data-width="{{ width_value }}"></div>
+    </div>
+</div>
+{% endfor %}
+</div>
+
+<div class="legend">
+    <div class="legend-item"><div class="legend-color" style="background:#4CAF50"></div>Excellent (80%+)</div>
+    <div class="legend-item"><div class="legend-color" style="background:#8BC34A"></div>Good (60–79%)</div>
+    <div class="legend-item"><div class="legend-color" style="background:#FFC107"></div>Average (40–59%)</div>
+    <div class="legend-item"><div class="legend-color" style="background:#FF9800"></div>Poor (1–39%)</div>
+    <div class="legend-item"><div class="legend-color" style="background:#f44336"></div>None (0%)</div>
+</div>
+
+</div>
+
+<!-- Day status modal -->
+<div class="modal fade" id="dayStatusModal" tabindex="-1" aria-labelledby="dayStatusLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="dayStatusLabel">Day Status</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body text-center">
+        <p id="dayStatusSubtitle" class="text-muted mb-3"></p>
+        <img id="dayStatusImg" src="" alt="Day status chart" class="img-fluid">
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Bootstrap JS (for modal) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Fill progress bars
+    document.querySelectorAll('.progress-bar-fill[data-width]').forEach(function(el) {
+        el.style.width = el.getAttribute('data-width') + '%';
+    });
+
+    // Handle day click to show pie chart
+    const modalEl = document.getElementById('dayStatusModal');
+    const modalTitle = document.getElementById('dayStatusLabel');
+    const modalSubtitle = document.getElementById('dayStatusSubtitle');
+    const modalImg = document.getElementById('dayStatusImg');
+    const dayModal = new bootstrap.Modal(modalEl);
+
+    document.querySelectorAll('.calendar-day').forEach(function(dayEl) {
+        dayEl.addEventListener('click', function() {
+            const date = dayEl.getAttribute('data-date');
+            const completed = parseInt(dayEl.getAttribute('data-completed') || '0', 10);
+            const total = parseInt(dayEl.getAttribute('data-total') || '0', 10);
+
+            if (!date || total === 0) {
+                alert('No habits for this day.');
+                return;
+            }
+
+            modalTitle.textContent = 'Day ' + dayEl.querySelector('.day-number').textContent + ' Status';
+            modalSubtitle.textContent = completed + ' of ' + total + ' habits completed';
+
+            // Cache-busting query param to avoid stale image
+            modalImg.src = '/day_status/' + date + '?_=' + Date.now();
+
+            dayModal.show();
+        });
+    });
+});
+</script>
+
+</body>
+</html>

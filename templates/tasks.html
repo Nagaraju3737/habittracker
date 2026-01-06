@@ -1,0 +1,14 @@
+<form method="post">
+    <h3>Add Habit</h3>
+    <input name="habit" placeholder="Habit name">
+    <button>Add</button>
+  
+    <h3>Today's Tasks</h3>
+    {% for task, done in tasks.items() %}
+      <input type="checkbox" name="{{task}}" {% if done %}checked{% endif %}>
+      {{task}}<br>
+    {% endfor %}
+  
+    <button>Save Progress</button>
+  </form>
+  
