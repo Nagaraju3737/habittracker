@@ -380,6 +380,10 @@
             justify-content: center;
         }
 
+        .chart-canvas-wrapper canvas {
+            max-height: 400px;
+        }
+
         /* MESSAGES */
         .loading {
             text-align: center;
@@ -411,6 +415,14 @@
             .chart-row {
                 grid-template-columns: 1fr;
             }
+            
+            .chart-canvas-wrapper {
+                min-height: 350px;
+            }
+            
+            .chart-canvas-wrapper canvas {
+                max-height: 450px;
+            }
         }
 
         @media (max-width: 768px) {
@@ -438,8 +450,20 @@
                 grid-template-columns: 1fr;
             }
             
+            .chart-container {
+                padding: 20px 16px;
+            }
+            
             .chart-canvas-wrapper {
-                min-height: 280px;
+                min-height: 380px;
+            }
+            
+            .chart-canvas-wrapper.donut-chart {
+                min-height: 400px;
+            }
+            
+            .chart-canvas-wrapper canvas {
+                max-height: 500px !important;
             }
             
             .main-content {
@@ -448,6 +472,62 @@
             
             .section-title-large {
                 font-size: 22px;
+            }
+            
+            .chart-header h3 {
+                font-size: 18px;
+            }
+            
+            .chart-description {
+                font-size: 13px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .main-content {
+                padding: 16px;
+            }
+            
+            .toolbar {
+                padding: 16px;
+            }
+            
+            .kpi-card {
+                padding: 20px;
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .kpi-icon {
+                font-size: 36px;
+            }
+            
+            .kpi-value {
+                font-size: 32px;
+            }
+            
+            .chart-container {
+                padding: 16px 12px;
+            }
+            
+            .chart-canvas-wrapper {
+                min-height: 420px;
+            }
+            
+            .chart-canvas-wrapper.donut-chart {
+                min-height: 450px;
+            }
+            
+            .chart-canvas-wrapper canvas {
+                max-height: 550px !important;
+            }
+            
+            .section-divider {
+                padding: 20px 16px;
+            }
+            
+            .section-title-large {
+                font-size: 20px;
             }
         }
     </style>
@@ -570,7 +650,17 @@
                         </div>
                     </div>
 
-                    
+                    <div class="chart-row">
+                        <div class="chart-container full-width">
+                            <div class="chart-header">
+                                <h3>🏅 Top Performing Habits</h3>
+                                <p class="chart-description">Habits ranked by completion percentage</p>
+                            </div>
+                            <div class="chart-canvas-wrapper">
+                                <canvas id="horizontalBarChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
 
                     <div class="section-divider">
                         <h2 class="section-title-large">📅 Weekly Analysis</h2>
@@ -776,7 +866,7 @@
             renderBarChart(metrics);
             renderDonutChart(metrics);
             renderLineChart(habitsData);
-            
+            renderHorizontalBarChart(metrics);
             renderWeeklyTrendChart(habitsData);
             renderWeeklyPercentChart(habitsData);
             renderWeeklyAverageChart(habitsData);
