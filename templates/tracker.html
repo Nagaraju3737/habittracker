@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskTraQ - Habit Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #8b5cf6;
+            --dark: #1f2937;
+            --gray: #6b7280;
+            --light-gray: #f3f4f6;
+            --border: #e5e7eb;
+            --white: #ffffff;
+            --danger: #ef4444;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background-attachment: fixed;
+            color: var(--dark);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .app-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* NAVBAR */
+        .navbar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-left h1 {
+            font-size: 28px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -1px;
+        }
+
+        .nav-center {
+            display: flex;
+            gap: 8px;
+        }
+
+        .nav-link {
+            text-decoration: none;
+            color: var(--gray);
+            font-weight: 600;
+            padding: 10px 20px;
+            border-radius: 10px;
+            transition: all 0.3s;
+            font-size: 15px;
+        }
+
+        .nav-link:hover {
+            background: var(--light-gray);
+            color: var(--dark);
+        }
+
+        .nav-link.active {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .nav-right span {
+            font-size: 14px;
+            color: var(--gray);
+            font-weight: 500;
+        }
+
+        /* BUTTONS */
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--gray);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #4b5563;
+            transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+            transform: translateY(-2px);
+        }
+
+        .btn-small {
+            padding: 8px 16px;
+            font-size: 12px;
+        }
+
+        .btn-icon {
+            padding: 10px 16px;
+            font-size: 18px;
+            background: white;
+            color: var(--primary);
+            border: 2px solid var(--border);
+        }
+
+        .btn-icon:hover {
+            background: var(--light-gray);
+            border-color: var(--primary);
+        }
+
+        /* MAIN CONTENT */
+        .main-content {
+            flex: 1;
+            padding: 32px;
+            max-width: 1600px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            padding: 20px 24px;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .month-selector {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .month-selector select {
+            padding: 10px 16px;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            background: white;
+            color: var(--dark);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .month-selector select:hover {
+            border-color: var(--primary);
+        }
+
+        .month-selector select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+        }
+
+        /* TABLE */
+        .excel-table-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            overflow-x: auto;
+            overflow-y: auto;
+        }
+
+        .excel-table-container::-webkit-scrollbar {
+            height: 12px;
+            width: 12px;
+        }
+
+        .excel-table-container::-webkit-scrollbar-track {
+            background: var(--light-gray);
+            border-radius: 10px;
+        }
+
+        .excel-table-container::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            border-radius: 10px;
+        }
+
+        .excel-table-container::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+        }
+
+        .excel-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 2200px;
+        }
+
+        .excel-table thead {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+        }
+
+        .excel-table th {
+            padding: 16px 12px;
+            text-align: center;
+            font-weight: 700;
+            font-size: 13px;
+            border-right: 1px solid rgba(255, 255, 255, 0.2);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .excel-table th:last-child {
+            border-right: none;
+        }
+
+        .habit-name-header {
+            text-align: left;
+            padding-left: 20px;
+            min-width: 220px;
+        }
+
+        .day-header {
+            width: 45px;
+            font-size: 13px;
+        }
+
+        .day-header.disabled {
+            background: rgba(255, 255, 255, 0.1);
+            opacity: 0.5;
+        }
+
+        .total-header, .percent-header {
+            min-width: 90px;
+            background: rgba(245, 158, 11, 0.2);
+        }
+
+        .actions-header {
+            min-width: 120px;
+        }
+
+        .excel-table tbody tr {
+            transition: all 0.3s;
+        }
+
+        .excel-table tbody tr:hover {
+            background: rgba(99, 102, 241, 0.05);
+            transform: scale(1.01);
+        }
+
+        .excel-table td {
+            padding: 12px;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+
+        .habit-name {
+            text-align: left;
+            padding-left: 20px;
+            font-weight: 600;
+            font-size: 15px;
+            color: var(--dark);
+        }
+
+        .day-cell {
+            width: 45px;
+        }
+
+        .day-cell.disabled {
+            background: var(--light-gray);
+        }
+
+        .day-cell .na {
+            color: #d1d5db;
+            font-weight: 600;
+        }
+
+        .day-cell input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: var(--primary);
+        }
+
+        .total-cell, .percent-cell {
+            background: #fef3c7;
+            font-weight: 700;
+            color: var(--dark);
+            font-size: 15px;
+        }
+
+        .actions-cell {
+            padding: 8px 12px;
+        }
+
+        /* MODAL */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 450px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            animation: scaleIn 0.3s ease;
+        }
+
+        @keyframes scaleIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .modal-content h2 {
+            margin-bottom: 24px;
+            color: var(--dark);
+            font-weight: 700;
+            font-size: 24px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--dark);
+            font-size: 14px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 14px 18px;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            font-size: 15px;
+            transition: all 0.3s;
+            background: var(--light-gray);
+            outline: none;
+        }
+
+        .form-group input:focus {
+            border-color: var(--primary);
+            background: var(--white);
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 28px;
+        }
+
+        .modal-actions .btn {
+            flex: 1;
+        }
+
+        /* MESSAGES */
+        .loading {
+            text-align: center;
+            padding: 60px;
+            color: white;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .error-message {
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: none;
+            border-left: 4px solid var(--danger);
+            font-weight: 600;
+        }
+
+        .error-message:not(:empty) {
+            display: block;
+        }
+
+        .no-data {
+            text-align: center;
+            color: var(--gray);
+            padding: 32px;
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            .navbar {
+                flex-direction: column;
+                gap: 16px;
+                padding: 20px;
+            }
+            
+            .nav-center {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .toolbar {
+                flex-direction: column;
+                gap: 16px;
+            }
+            
+            .main-content {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <nav class="navbar">
+            <div class="nav-left">
+                <h1>📊 TaskTraQ</h1>
+            </div>
+            <div class="nav-center">
+                <a href="/tracker" class="nav-link active">Tracker</a>
+                <a href="/dashboard" class="nav-link">Dashboard</a>
+            </div>
+            <div class="nav-right">
+                <span id="userEmail"></span>
+                <button onclick="logout()" class="btn btn-secondary">Logout</button>
+            </div>
+        </nav>
+        
+        <div class="main-content">
+            <div class="toolbar">
+                <div class="month-selector">
+                    <button onclick="changeMonth(-1)" class="btn btn-icon">◀</button>
+                    <select id="monthSelect" onchange="loadHabits()"></select>
+                    <select id="yearSelect" onchange="loadHabits()"></select>
+                    <button onclick="changeMonth(1)" class="btn btn-icon">▶</button>
+                </div>
+                
+                <button onclick="showAddHabitModal()" class="btn btn-primary">+ Add Habit</button>
+            </div>
+            
+            <div id="loadingMessage" class="loading">Loading habits...</div>
+            <div id="errorMessage" class="error-message"></div>
+            
+            <div class="excel-table-container">
+                <table id="habitsTable" class="excel-table">
+                    <thead>
+                        <tr id="tableHeader"></tr>
+                    </thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <div id="addHabitModal" class="modal">
+        <div class="modal-content">
+            <h2>Add New Habit</h2>
+            <form id="addHabitForm">
+                <div class="form-group">
+                    <label>Habit Name (max 25 characters)</label>
+                    <input type="text" id="habitName" maxlength="25" required placeholder="e.g., Morning Exercise">
+                </div>
+                <div class="modal-actions">
+                    <button type="submit" class="btn btn-primary">Add Habit</button>
+                    <button type="button" onclick="closeModal()" class="btn btn-secondary">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script src="/static/js/app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            checkAuth();
+            initializeMonthYear();
+            loadHabits();
+        });
+        
+        function checkAuth() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = '/';
+                return;
+            }
+            document.getElementById('userEmail').textContent = localStorage.getItem('user_email') || '';
+        }
+        
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user_email');
+            window.location.href = '/';
+        }
+        
+        function initializeMonthYear() {
+            const now = new Date();
+            const monthSelect = document.getElementById('monthSelect');
+            const yearSelect = document.getElementById('yearSelect');
+            
+            const months = ['January', 'February', 'March', 'April', 'May', 'June', 
+                          'July', 'August', 'September', 'October', 'November', 'December'];
+            
+            months.forEach((month, index) => {
+                const option = document.createElement('option');
+                option.value = index + 1;
+                option.textContent = month;
+                monthSelect.appendChild(option);
+            });
+            
+            for (let year = now.getFullYear() - 2; year <= now.getFullYear() + 2; year++) {
+                const option = document.createElement('option');
+                option.value = year;
+                option.textContent = year;
+                yearSelect.appendChild(option);
+            }
+            
+            monthSelect.value = now.getMonth() + 1;
+            yearSelect.value = now.getFullYear();
+        }
+        
+        function changeMonth(delta) {
+            const monthSelect = document.getElementById('monthSelect');
+            const yearSelect = document.getElementById('yearSelect');
+            
+            let month = parseInt(monthSelect.value);
+            let year = parseInt(yearSelect.value);
+            
+            month += delta;
+            if (month > 12) {
+                month = 1;
+                year++;
+            } else if (month < 1) {
+                month = 12;
+                year--;
+            }
+            
+            monthSelect.value = month;
+            yearSelect.value = year;
+            loadHabits();
+        }
+        
+        async function loadHabits() {
+            const loading = document.getElementById('loadingMessage');
+            const errorDiv = document.getElementById('errorMessage');
+            const month = document.getElementById('monthSelect').value;
+            const year = document.getElementById('yearSelect').value;
+            
+            loading.style.display = 'block';
+            errorDiv.textContent = '';
+            
+            try {
+                const response = await apiCall(`/api/habits?year=${year}&month=${month}`);
+                renderTable(response.habits, year, month);
+            } catch (error) {
+                errorDiv.textContent = error.message;
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+        
+        function renderTable(habits, year, month) {
+            const daysInMonth = new Date(year, month, 0).getDate();
+            const header = document.getElementById('tableHeader');
+            const body = document.getElementById('tableBody');
+            
+            header.innerHTML = '<th class="habit-name-header">Habit Name</th>';
+            for (let day = 1; day <= 31; day++) {
+                const th = document.createElement('th');
+                th.textContent = day;
+                th.className = day > daysInMonth ? 'day-header disabled' : 'day-header';
+                header.appendChild(th);
+            }
+            header.innerHTML += '<th class="total-header">Total</th><th class="percent-header">% Done</th><th class="actions-header">Actions</th>';
+            
+            body.innerHTML = '';
+            
+            if (habits.length === 0) {
+                const row = document.createElement('tr');
+                row.innerHTML = '<td colspan="35" class="no-data">No habits yet. Click "Add Habit" to get started!</td>';
+                body.appendChild(row);
+                return;
+            }
+            
+            habits.forEach(habit => {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td class="habit-name">${escapeHtml(habit.name)}</td>`;
+                
+                habit.days.forEach((value, index) => {
+                    const day = index + 1;
+                    const td = document.createElement('td');
+                    td.className = 'day-cell';
+                    
+                    if (value === null) {
+                        td.className += ' disabled';
+                        td.innerHTML = '<span class="na">—</span>';
+                    } else {
+                        const checkbox = document.createElement('input');
+                        checkbox.type = 'checkbox';
+                        checkbox.checked = value === 1;
+                        checkbox.onchange = () => toggleDay(habit.id, year, month, day, checkbox.checked);
+                        td.appendChild(checkbox);
+                    }
+                    row.appendChild(td);
+                });
+                
+                const totalTd = document.createElement('td');
+                totalTd.className = 'total-cell';
+                totalTd.textContent = habit.total;
+                row.appendChild(totalTd);
+                
+                const percentTd = document.createElement('td');
+                percentTd.className = 'percent-cell';
+                percentTd.textContent = habit.percent_complete + '%';
+                row.appendChild(percentTd);
+                
+                const actionsTd = document.createElement('td');
+                actionsTd.className = 'actions-cell';
+                actionsTd.innerHTML = `<button onclick="deleteHabit('${habit.id}')" class="btn btn-danger btn-small">Delete</button>`;
+                row.appendChild(actionsTd);
+                
+                body.appendChild(row);
+            });
+        }
+        
+        async function toggleDay(habitId, year, month, day, checked) {
+            const date = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            const completed = checked ? 1 : 0;
+            
+            try {
+                const response = await apiCall(`/api/habits/${habitId}/day/${date}`, 'PUT', { completed });
+                renderTable(response.habits, year, month);
+            } catch (error) {
+                alert(error.message);
+                loadHabits();
+            }
+        }
+        
+        function showAddHabitModal() {
+            document.getElementById('addHabitModal').style.display = 'flex';
+            document.getElementById('habitName').value = '';
+            document.getElementById('habitName').focus();
+        }
+        
+        function closeModal() {
+            document.getElementById('addHabitModal').style.display = 'none';
+        }
+        
+        document.getElementById('addHabitForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('habitName').value.trim();
+            
+            if (!name) {
+                alert('Please enter a habit name');
+                return;
+            }
+            
+            try {
+                await apiCall('/api/habits', 'POST', { name });
+                closeModal();
+                loadHabits();
+            } catch (error) {
+                alert(error.message);
+            }
+        });
+        
+        async function deleteHabit(habitId) {
+            if (!confirm('Are you sure you want to delete this habit? This action cannot be undone.')) return;
+            
+            try {
+                await apiCall(`/api/habits/${habitId}`, 'DELETE');
+                loadHabits();
+            } catch (error) {
+                alert(error.message);
+            }
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeModal();
+            }
+        });
+    </script>
+</body>
+</html>
