@@ -65,17 +65,20 @@ def api_get_habits(user):
 @require_auth
 def api_create_habit(user):
     """Create a new habit"""
-    data = request.get_json()
-    name = data.get('name', '').strip()
-    
-    habit, error = create_habit(user['id'], name)
-    if error:
-        return jsonify({'error': error}), 400
-    
-    return jsonify({
-        'message': 'Habit created successfully',
-        'habit': habit
-    }), 201
+    try:
+        data = request.get_json()
+        name = data.get('name', '').strip()
+        
+        habit, error = create_habit(user['id'], name)
+        if error:
+            return jsonify({'error': error}), 400
+        
+        return jsonify({
+            'message': 'Habit created successfully',
+            'habit': habit
+        }), 201
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @api_bp.route('/habits/<habit_id>', methods=['PUT'])
 @require_auth

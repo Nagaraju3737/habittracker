@@ -22,7 +22,17 @@ async function apiCall(url, method = 'GET', body = null) {
     }
     
     const response = await fetch(url, options);
-    const data = await response.json();
+    let data;
+    
+    try {
+        const text = await response.text();
+        // Try to parse as JSON
+        data = text ? JSON.parse(text) : {};
+    } catch (e) {
+        // If response is not valid JSON, throw a more specific error
+        console.error('Response text:', response.status, response.statusText);
+        throw new Error(`Server error (${response.status}): Invalid response from server`);
+    }
     
     if (!response.ok) {
         // Token expired or invalid
@@ -32,7 +42,7 @@ async function apiCall(url, method = 'GET', body = null) {
             window.location.href = '/';
             throw new Error('Session expired. Please login again.');
         }
-        throw new Error(data.error || 'Request failed');
+        throw new Error(data.error || `Server error: ${response.statusText}`);
     }
     
     return data;

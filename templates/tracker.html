@@ -488,6 +488,46 @@
                 padding: 20px;
             }
         }
+
+        /* TOAST NOTIFICATIONS */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 16px 24px;
+            border-radius: 8px;
+            background: var(--dark);
+            color: white;
+            font-size: 14px;
+            font-weight: 500;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: all 0.3s ease;
+            pointer-events: auto;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .toast-success {
+            background: #10b981;
+        }
+
+        .toast-error {
+            background: #ef4444;
+        }
+
+        .toast-info {
+            background: #3b82f6;
+        }
+
+        .toast-warning {
+            background: #f59e0b;
+        }
     </style>
 </head>
 <body>
@@ -736,9 +776,10 @@
             try {
                 await apiCall('/api/habits', 'POST', { name });
                 closeModal();
+                showToast('Habit added successfully!', 'success');
                 loadHabits();
             } catch (error) {
-                alert(error.message);
+                showToast(error.message, 'error');
             }
         });
         
@@ -747,9 +788,10 @@
             
             try {
                 await apiCall(`/api/habits/${habitId}`, 'DELETE');
+                showToast('Habit deleted successfully!', 'success');
                 loadHabits();
             } catch (error) {
-                alert(error.message);
+                showToast(error.message, 'error');
             }
         }
         

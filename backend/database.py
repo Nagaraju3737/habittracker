@@ -2,161 +2,95 @@
 Thread-safe JSON file database operations
 """
 
-import json
+
 import os
-from threading import Lock
 from datetime import datetime
+from pymongo import MongoClient
 
-# Thread locks for file safety
-users_lock = Lock()
-habits_lock = Lock()
-logs_lock = Lock()
-
-DATA_DIR = 'data'
-USERS_FILE = os.path.join(DATA_DIR, 'users.json')
-HABITS_FILE = os.path.join(DATA_DIR, 'habits.json')
-LOGS_FILE = os.path.join(DATA_DIR, 'daily_logs.json')
+MONGO_URI = os.environ.get('MONGO_URI', 'mongodb+srv://nagarajuch3737:Nr%4012102004@habit-tracker.b47rper.mongodb.net/?appName=Habit-tracker')
+client = MongoClient(MONGO_URI)
+# Use 'habit_tracker' database for all collections
+db = client['habit_tracker']
+users_collection = db['users']  # Store email and password
+habits_collection = db['habits']  # Store habits per user
+logs_collection = db['daily_logs']  # Store logs per user
 
 def init_db():
-    """Initialize database files if they don't exist"""
-    os.makedirs(DATA_DIR, exist_ok=True)
-    
-    if not os.path.exists(USERS_FILE):
-        with open(USERS_FILE, 'w') as f:
-            json.dump([], f)
-    
-    if not os.path.exists(HABITS_FILE):
-        with open(HABITS_FILE, 'w') as f:
-            json.dump([], f)
-    
-    if not os.path.exists(LOGS_FILE):
-        with open(LOGS_FILE, 'w') as f:
-            json.dump([], f)
+    """MongoDB does not require file initialization."""
+    pass
 
-def read_json(filepath, lock):
-    """Thread-safe read from JSON file"""
-    with lock:
-        try:
-            with open(filepath, 'r') as f:
-                return json.load(f)
-        except (FileNotFoundError, json.JSONDecodeError):
-            return []
 
-def write_json(filepath, data, lock):
-    """Thread-safe write to JSON file"""
-    with lock:
-        with open(filepath, 'w') as f:
-            json.dump(data, f, indent=2)
+## Removed old JSON file functions (read_json, write_json)
 
-# User operations
+
+# User operations (MongoDB)
 def get_users():
-    return read_json(USERS_FILE, users_lock)
-
-def save_users(users):
-    write_json(USERS_FILE, users, users_lock)
+    return list(users_collection.find({}, {'_id': 0}))
 
 def add_user(user):
-    users = get_users()
-    users.append(user)
-    save_users(users)
+    users_collection.insert_one(user)
     return user
 
 def find_user_by_email(email):
-    users = get_users()
-    return next((u for u in users if u['email'] == email), None)
+    user = users_collection.find_one({'email': email}, {'_id': 0})
+    return user
 
 def find_user_by_id(user_id):
-    users = get_users()
-    return next((u for u in users if u['id'] == user_id), None)
+    user = users_collection.find_one({'id': user_id}, {'_id': 0})
+    return user
 
-# Habit operations
+# Habit operations (MongoDB)
 def get_habits():
-    return read_json(HABITS_FILE, habits_lock)
-
-def save_habits(habits):
-    write_json(HABITS_FILE, habits, habits_lock)
+    return list(habits_collection.find({}, {'_id': 0}))
 
 def add_habit(habit):
-    habits = get_habits()
-    habits.append(habit)
-    save_habits(habits)
-    return habit
+    habits_collection.insert_one(habit)
+    habit_copy = habit.copy()
+    habit_copy.pop('_id', None)
+    return habit_copy
 
 def get_user_habits(user_id):
-    habits = get_habits()
-    return [h for h in habits if h['user_id'] == user_id]
+    return list(habits_collection.find({'user_id': user_id}, {'_id': 0}))
 
 def find_habit(habit_id):
-    habits = get_habits()
-    return next((h for h in habits if h['id'] == habit_id), None)
+    return habits_collection.find_one({'id': habit_id}, {'_id': 0})
 
 def update_habit(habit_id, updates):
-    habits = get_habits()
-    for h in habits:
-        if h['id'] == habit_id:
-            h.update(updates)
-            save_habits(habits)
-            return h
+    result = habits_collection.update_one({'id': habit_id}, {'$set': updates})
+    if result.modified_count:
+        return habits_collection.find_one({'id': habit_id}, {'_id': 0})
     return None
 
 def delete_habit(habit_id):
-    habits = get_habits()
-    habits = [h for h in habits if h['id'] != habit_id]
-    save_habits(habits)
-    
-    # Also delete associated logs
-    logs = get_daily_logs()
-    logs = [l for l in logs if l['habit_id'] != habit_id]
-    save_daily_logs(logs)
+    habits_collection.delete_one({'id': habit_id})
+    logs_collection.delete_many({'habit_id': habit_id})
 
-# Daily log operations
+# Daily log operations (MongoDB)
 def get_daily_logs():
-    return read_json(LOGS_FILE, logs_lock)
-
-def save_daily_logs(logs):
-    write_json(LOGS_FILE, logs, logs_lock)
+    return list(logs_collection.find({}, {'_id': 0}))
 
 def get_user_logs(user_id, year, month):
-    """Get logs for a specific user and month"""
-    logs = get_daily_logs()
-    return [
-        l for l in logs 
-        if l['user_id'] == user_id 
-        and l['date'].startswith(f"{year}-{month:02d}")
-    ]
+    prefix = f"{year}-{month:02d}"
+    return list(logs_collection.find({
+        'user_id': user_id,
+        'date': {'$regex': f'^{prefix}'}
+    }, {'_id': 0}))
 
 def get_habit_logs(habit_id, year, month):
-    """Get logs for a specific habit and month"""
-    logs = get_daily_logs()
-    return [
-        l for l in logs 
-        if l['habit_id'] == habit_id 
-        and l['date'].startswith(f"{year}-{month:02d}")
-    ]
+    prefix = f"{year}-{month:02d}"
+    return list(logs_collection.find({
+        'habit_id': habit_id,
+        'date': {'$regex': f'^{prefix}'}
+    }, {'_id': 0}))
 
 def find_log(user_id, habit_id, date):
-    """Find a specific log entry"""
-    logs = get_daily_logs()
-    return next((
-        l for l in logs 
-        if l['user_id'] == user_id 
-        and l['habit_id'] == habit_id 
-        and l['date'] == date
-    ), None)
+    return logs_collection.find_one({
+        'user_id': user_id,
+        'habit_id': habit_id,
+        'date': date
+    }, {'_id': 0})
 
 def upsert_log(user_id, habit_id, date, completed):
-    """Insert or update a daily log entry"""
-    logs = get_daily_logs()
-    
-    # Find existing log
-    existing = None
-    for i, l in enumerate(logs):
-        if (l['user_id'] == user_id and 
-            l['habit_id'] == habit_id and 
-            l['date'] == date):
-            existing = i
-            break
-    
     log_entry = {
         'user_id': user_id,
         'habit_id': habit_id,
@@ -164,11 +98,9 @@ def upsert_log(user_id, habit_id, date, completed):
         'completed': completed,
         'updated_at': datetime.utcnow().isoformat()
     }
-    
-    if existing is not None:
-        logs[existing] = log_entry
-    else:
-        logs.append(log_entry)
-    
-    save_daily_logs(logs)
+    logs_collection.update_one(
+        {'user_id': user_id, 'habit_id': habit_id, 'date': date},
+        {'$set': log_entry},
+        upsert=True
+    )
     return log_entry
